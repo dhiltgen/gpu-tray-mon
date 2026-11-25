@@ -260,8 +260,9 @@ func getFormattedArray(c uintptr, format uint32) ([]item, error) {
 
 var luidRe = regexp.MustCompile(`luid_0x[0-9a-fA-F]{8}_0x[0-9a-fA-F]{8}`)
 
-// luidOf extracts the "luid_0xHI_0xLO" token from an instance name, or "".
-func luidOf(name string) string { return luidRe.FindString(name) }
+// luidOf extracts the "luid_0xHI_0xLO" token from an instance name (lowercased
+// for case-insensitive matching), or "".
+func luidOf(name string) string { return strings.ToLower(luidRe.FindString(name)) }
 
 // engineTypeOf returns the engine type ("3D", "Compute", "Copy", ...) for a
 // GPU Engine instance name, or "" if absent/empty.

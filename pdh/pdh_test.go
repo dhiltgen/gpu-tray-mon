@@ -6,7 +6,7 @@ import "testing"
 
 func TestLuidOf(t *testing.T) {
 	in := "pid_22624_luid_0x00000000_0x0001BD79_phys_0_eng_8_engtype_VideoProcessing"
-	if got := luidOf(in); got != "luid_0x00000000_0x0001BD79" {
+	if got := luidOf(in); got != "luid_0x00000000_0x0001bd79" {
 		t.Fatalf("luidOf(%q) = %q", in, got)
 	}
 	if got := luidOf("no luid here"); got != "" {
@@ -37,11 +37,11 @@ func TestAggregateUtilization(t *testing.T) {
 		{name: "ignored_no_luid", value: 99},
 	}
 	got := aggregateUtilization(samples)
-	if got["luid_0x00000000_0x0000000A"] != 70 {
-		t.Errorf("adapter A = %v, want 70", got["luid_0x00000000_0x0000000A"])
+	if got["luid_0x00000000_0x0000000a"] != 70 {
+		t.Errorf("adapter A = %v, want 70", got["luid_0x00000000_0x0000000a"])
 	}
-	if got["luid_0x00000000_0x0000000B"] != 20 {
-		t.Errorf("adapter B = %v, want 20", got["luid_0x00000000_0x0000000B"])
+	if got["luid_0x00000000_0x0000000b"] != 20 {
+		t.Errorf("adapter B = %v, want 20", got["luid_0x00000000_0x0000000b"])
 	}
 	if len(got) != 2 {
 		t.Errorf("expected 2 adapters, got %v", got)

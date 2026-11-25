@@ -49,3 +49,15 @@ func TestColorFor(t *testing.T) {
 		t.Errorf("colorFor(nil) fallback R = %d", got)
 	}
 }
+
+func TestIconGUID(t *testing.T) {
+	if iconGUID("util", "0:0:0") != iconGUID("util", "0:0:0") {
+		t.Error("iconGUID should be deterministic")
+	}
+	if iconGUID("util", "0:0:0") == iconGUID("mem", "0:0:0") {
+		t.Error("different metrics should produce different GUIDs")
+	}
+	if iconGUID("util", "0:0:0") == iconGUID("util", "0:1:0") {
+		t.Error("different adapters should produce different GUIDs")
+	}
+}

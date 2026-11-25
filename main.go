@@ -5,6 +5,8 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"image/color"
@@ -33,6 +35,22 @@ func colorFor(palette []color.RGBA, i int) color.RGBA {
 		return color.RGBA{R: 0x4f, G: 0xc3, B: 0xf7, A: 0xff}
 	}
 	return palette[i%len(palette)]
+}
+
+// iconGUID derives a stable, deterministic GUID (UUIDv5) from a metric name
+// and a stable adapter identifier, so Windows remembers each icon's tray
+// position across launches instead of treating every launch as a new icon.
+func iconGUID(metric, stableID string) windows.GUID {
+	sum := sha1.Sum([]byte("gpu-tray-mon/" + metric + "/" + stableID))
+	d := sum[:]
+	d[6] = (d[6] & 0x0f) | 0x50 // UUID version 5
+	d[8] = (d[8] & 0x3f) | 0x80 // RFC 4122 variant
+	return windows.GUID{
+		Data1: binary.BigEndian.Uint32(d[0:4]),
+		Data2: binary.BigEndian.Uint16(d[4:6]),
+		Data3: binary.BigEndian.Uint16(d[6:8]),
+		Data4: [8]byte(d[8:16]),
+	}
 }
 
 func main() {
@@ -167,7 +185,7 @@ func printAdapterDetails(details []adapter.Detail) {
 		if name == "" {
 			name = "(unnamed)"
 		}
-		fmt.Printf("  %s  name=%q  dedicated_total=%d  [%s]\n", d.LUID, name, d.DedicatedTotalBytes, status)
+		fmt.Printf("  %s  stable_id=%s  name=%q  dedicated_total=%d  [%s]\n", d.LUID, d.StableID, name, d.DedicatedTotalBytes, status)
 	}
 	if countChartable(details) == 0 {
 		fmt.Println("no chartable GPU adapters detected. Possible causes:")
@@ -235,12 +253,8 @@ func runTray(interval time.Duration, palette []color.RGBA) {
 	for i := range adapters {
 		utilUID[i] = uint32(2*i + 1)
 		memUID[i] = uint32(2*i + 2)
-		g1, err1 := tray.NewGUID()
-		g2, err2 := tray.NewGUID()
-		if err1 != nil || err2 != nil {
-			fmt.Fprintln(os.Stderr, "guid:", err1, err2)
-			os.Exit(1)
-		}
+		g1 := iconGUID("util", adapters[i].StableID)
+		g2 := iconGUID("mem", adapters[i].StableID)
 		if err := t.AddIcon(utilUID[i], g1); err != nil {
 			fmt.Fprintf(os.Stderr, "tray add (util %d): %v\n", i, err)
 			os.Exit(1)
@@ -346,11 +360,7 @@ func runTray(interval time.Duration, palette []color.RGBA) {
 // menu, used when no GPU is detected or metrics can't be read.
 func runErrorTray(t *tray.Tray, tip string) {
 	const uID = 1
-	guid, err := tray.NewGUID()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "guid: %v\n", err)
-		os.Exit(1)
-	}
+	guid := iconGUID("error", "no-gpu")
 	if err := t.AddIcon(uID, guid); err != nil {
 		fmt.Fprintf(os.Stderr, "tray add: %v\n", err)
 		os.Exit(1)

@@ -71,7 +71,6 @@ var (
 	libuser32   = windows.NewLazySystemDLL("user32.dll")
 	libgdi32    = windows.NewLazySystemDLL("gdi32.dll")
 	libshell32  = windows.NewLazySystemDLL("shell32.dll")
-	libole32    = windows.NewLazySystemDLL("ole32.dll")
 	libkernel32 = windows.NewLazySystemDLL("kernel32.dll")
 
 	procGetModuleHandle       = libkernel32.NewProc("GetModuleHandleW")
@@ -90,7 +89,6 @@ var (
 	procDeleteObject          = libgdi32.NewProc("DeleteObject")
 	procGetDC                 = libuser32.NewProc("GetDC")
 	procReleaseDC             = libuser32.NewProc("ReleaseDC")
-	procCoCreateGuid          = libole32.NewProc("CoCreateGuid")
 	procCreatePopupMenu       = libuser32.NewProc("CreatePopupMenu")
 	procAppendMenuW           = libuser32.NewProc("AppendMenuW")
 	procTrackPopupMenu        = libuser32.NewProc("TrackPopupMenu")
@@ -466,16 +464,6 @@ func (t *Tray) Run() {
 // Stop asks the message loop to shut down.
 func (t *Tray) Stop() {
 	procPostMessage.Call(uintptr(t.hwnd), wmClose, 0, 0)
-}
-
-// NewGUID returns a fresh random GUID for a tray icon.
-func NewGUID() (windows.GUID, error) {
-	var g windows.GUID
-	r, _, _ := procCoCreateGuid.Call(uintptr(unsafe.Pointer(&g)))
-	if r != 0 {
-		return g, fmt.Errorf("CoCreateGuid failed 0x%08x", uint32(r))
-	}
-	return g, nil
 }
 
 // IconSize returns the DPI-scaled system-tray icon size in pixels, so icons
